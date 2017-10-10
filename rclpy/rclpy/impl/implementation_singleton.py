@@ -32,6 +32,7 @@ import os
 try:
     rclpy_implementation = importlib.import_module('._rclpy', package='rclpy')
     rclpy_logging_implementation = importlib.import_module('._rclpy_logging', package='rclpy')
+    rclpy_wait_set_implementation = importlib.import_module('._rclpy_wait_set', package='rclpy')
 except ImportError as e:
     if e.path is not None and os.path.isfile(e.path):
         e.msg += \
