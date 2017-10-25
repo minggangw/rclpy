@@ -313,41 +313,44 @@ class Executor:
 
                 # Process ready entities one node at a time
                 for node in nodes:
-                    for tmr in [t for t in timers if wait_set.is_ready(t.timer_pointer)]:
-                        # Check that a timer is ready to workaround rcl issue with cancelled timers
-                        if _rclpy.rclpy_is_timer_ready(tmr.timer_handle):
-                            if tmr == timeout_timer:
+                    for tmr in node.timers:
+                        if (wait_set.is_ready(tmr.timer_pointer) and
+                                tmr.callback_group.can_execute(tmr)):
+                            # TODO(Sloretz) Which rcl bug does this workaround? Something about
+                            #   cancelled timers?
+                            if not _rclpy.rclpy_is_timer_ready(tmr.timer_handle):
                                 continue
-                            elif tmr.callback_group.can_execute(tmr):
-                                handler = self._make_handler(
-                                    tmr, self._take_timer, self._execute_timer)
-                                yielded_work = True
-                                yield handler, tmr, node
+                            handler = self._make_handler(
+                                tmr, self._take_timer, self._execute_timer)
+                            yielded_work = True
+                            yield handler, tmr, node
 
-                    for sub in [s for s in subscriptions if wait_set.is_ready(
-                            s.subscription_pointer)]:
-                        if sub.callback_group.can_execute(sub):
+                    for sub in node.subscriptions:
+                        if (wait_set.is_ready(sub.subscription_pointer) and
+                                sub.callback_group.can_execute(sub)):
                             handler = self._make_handler(
                                 sub, self._take_subscription, self._execute_subscription)
                             yielded_work = True
                             yield handler, sub, node
 
-                    for gc in [g for g in node.guards if g._executor_triggered]:
-                        if gc.callback_group.can_execute(gc):
+                    for gc in node.guards:
+                        if gc._executor_triggered and gc.callback_group.can_execute(gc):
                             handler = self._make_handler(
                                 gc, self._take_guard_condition, self._execute_guard_condition)
                             yielded_work = True
                             yield handler, gc, node
 
-                    for client in [c for c in clients if wait_set.is_ready(c.client_pointer)]:
-                        if client.callback_group.can_execute(client):
+                    for client in node.clients:
+                        if (wait_set.is_ready(client.client_pointer) and
+                                client.callback_group.can_execute(client)):
                             handler = self._make_handler(
                                 client, self._take_client, self._execute_client)
                             yielded_work = True
                             yield handler, client, node
 
-                    for srv in [s for s in services if wait_set.is_ready(s.service_pointer)]:
-                        if srv.callback_group.can_execute(srv):
+                    for srv in node.services:
+                        if (wait_set.is_ready(srv.service_pointer) and
+                                srv.callback_group.can_execute(srv)):
                             handler = self._make_handler(
                                 srv, self._take_service, self._execute_service)
                             yielded_work = True
