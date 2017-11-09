@@ -136,7 +136,7 @@ if(BUILD_TESTING)
       WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
       PYTHON_EXECUTABLE "${PYTHON_EXECUTABLE}"
       APPEND_ENV AMENT_PREFIX_PATH=${ament_index_build_path}
-      TIMEOUT 120
+      TIMEOUT 90
     )
   endif()
 endif()
